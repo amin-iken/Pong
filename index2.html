@@ -1,0 +1,77 @@
+<html>
+    <title>PONG</title>
+    <body>
+    </body>
+<script src="http://localhost:3000/gameControl"></script>
+<script src="http://localhost:3000/gameDisplay"></script>
+<script src="http://localhost:3000/game"></script>
+<script src="http://localhost:3000/gameKeycode"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    var socket = io();
+    var requestAnimId;
+    var player = '';
+    var scorePlayer1 = 0;
+    var scorePlayer2 = 0;
+    
+    var initialisation = function() {
+    // le code de l'initialisation
+
+    socket.on('player', (playerRole) => {
+        console.log(playerRole);
+        player = playerRole;
+        socket.emit('ack', player);
+    })
+
+    game.init();
+
+    socket.on('downloadBall', (ballPosX, ballPosY, ballDirX, ballDirY) => {
+        game.updateBallValues(ballPosX, ballPosY, ballDirX, ballDirY);  
+    });
+
+    socket.on('downloadPlayer1', (Player1) => {
+        game.updatePlayerOne(Player1);
+    });
+    socket.on('downloadPlayer2', (Player2) => {
+        game.updatePlayerTwo(Player2);
+    });
+    socket.on('downloadPlayer3', (Player3) => {
+        game.updatePlayerThree(Player3);
+    });
+    socket.on('downloadPlayer4', (Player4) => {
+        game.updatePlayerFour(Player4);
+    });
+
+    requestAnimId = window.requestAnimationFrame(main);// premier appel de main au rafraîchissement de la page
+    }
+
+    var main = function() {
+    // le code du jeu
+    game.clearLayer(game.playersBallLayer);
+    game.displayPlayers();
+    game.moveBall();
+    game.collideBallWithPlayersAndAction();
+    
+    if(player == 'player1'){
+        game.movePlayerOne();
+        socket.emit('uploadPlayer1', game.playerOne);
+    }
+    if(player == 'player2'){
+        game.movePlayerTwo();
+        socket.emit('uploadPlayer2', game.playerTwo);
+    }
+    if(player == 'player3'){
+        game.movePlayerThree();
+        socket.emit('uploadPlayer3', game.playerThree);
+    }
+    if(player == 'player4'){
+        game.movePlayerFour();
+        socket.emit('uploadPlayer4', game.playerFour);
+    }
+
+    socket.emit('uploadBall', game.ball.posX, game.ball.posY, game.ball.directionX, game.ball.directionY);
+    requestAnimId = window.requestAnimationFrame(main); // rappel de main  au prochain rafraîchissement de la page
+}
+    window.onload = initialisation; // appel de la fonction initialisation au chargement de la page
+</script>
+</html>
